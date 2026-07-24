@@ -13,9 +13,10 @@ mcp = FastMCP("voice-announce")
 def announce(text: str) -> str:
     """Speak a short summary out loud through the local speakers.
 
-    Call this with a 1-3 sentence summary of what you just did or found --
-    write the summary yourself first, then pass only that summary text here.
-    Do not pass long text; this is for a spoken announcement, not a document.
+    Call this with a very short summary (1-2 lines), written entirely in
+    Korean, of what you just did or found -- write the summary yourself
+    first, then pass only that summary text here. Do not pass long text or
+    non-Korean text; this is for a spoken announcement, not a document.
     """
     engine = get_engine()
     fd, out_path = tempfile.mkstemp(suffix=".wav")
