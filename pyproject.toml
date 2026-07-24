@@ -8,7 +8,6 @@ dependencies = [
     "torch",
     "numpy",
     "soundfile",
-    "librosa",
     "huggingface_hub",
     "safetensors",
     "einops",
