@@ -12,12 +12,14 @@ or CPU, auto-detected.
 
 ## Status
 
-Early scaffold, built while a smaller on-device FreyaTTS pretrain
-(88M/127M/183M) is running in a separate project -- **not yet installed or
-tested end-to-end on macOS or native Windows.** The WSL2/Linux code paths
-were written and reasoned through on a headless Linux dev box, not verified
-against real audio hardware either. Treat this as a first pass to react to,
-not a finished tool.
+Core pipeline (load model -> synthesize -> write wav) verified working
+end-to-end on Linux/CPU with a local checkpoint, in a clean venv with only
+the declared `pyproject.toml` dependencies (no manual PYTHONPATH). **Not yet
+tested on macOS or native Windows**, and the audio-playback code for those
+platforms is best-effort, not hardware-verified. GPU inference also untested
+on this dev box (its driver is older than the CUDA version the default pip
+`torch` wheel needs -- not an issue on a normal desktop/laptop with current
+drivers).
 
 ## How it works
 
@@ -35,12 +37,36 @@ not a finished tool.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `VOICE_MCP_MODEL` | `ummjevel/freyatts-ko-voiceA` | **Not published to HF yet.** Until it is, point this at a local checkpoint dir, e.g. `/data/users/voice/zoey/FreyaTTS/checkpoints/distill_voiceA/final`. Can also be any other HF repo id in the same format. |
+| `VOICE_MCP_MODEL` | `ummjevel/freyatts-ko-voiceA` | **Not published to HF yet.** Until it is, point this at a local checkpoint dir *converted* to `from_pretrained` format (`config.json` + `model.safetensors`), e.g. `FreyaTTS/checkpoints/distill_voiceA/final/hf` -- run `python training/convert_ckpt.py checkpoints/distill_voiceA/final/model.pt --out checkpoints/distill_voiceA/final/hf` first if that `hf/` subfolder doesn't exist yet. Once published to HF in this same converted format, no local conversion step is needed at all. |
 | `VOICE_MCP_DEVICE` | auto (`cuda` > `mps` > `cpu`) | Override if auto-detection picks wrong |
 | `VOICE_MCP_STEPS` | `32` | ODE sampling steps; lower = faster, some quality loss. Untested below 32 so far -- see FreyaTTS's `sample()` |
 | `VOICE_MCP_SEED` | `9` | Voice identity (FreyaTTS has no speaker embedding -- seed *is* the voice). `9` = voiceA's locked seed per `confirmed_voices/best_seeds.json` |
 
 ## Install
+
+### Non-developers (recommended): one command, no manual venv
+
+[`pipx`](https://pipx.pypa.io/) installs a Python CLI tool into its own
+isolated environment automatically -- no `venv`/`activate`/`PYTHONPATH`
+steps for the user to get right.
+
+```sh
+# one-time, if pipx isn't already installed:
+#   macOS:   brew install pipx
+#   Windows: py -m pip install --user pipx
+#   Linux:   sudo apt install pipx   (or: python3 -m pip install --user pipx)
+
+pipx install git+https://github.com/ummjevel/voice-announce-mcp.git
+```
+
+This pulls in `freyatts` (and its own dependencies: torch, voxcpm, etc.)
+automatically -- `freyatts` is now a proper pip package (see
+`FreyaTTS/pyproject.toml`), so this is a single command with nothing to
+clone or convert by hand, as long as `VOICE_MCP_MODEL` points at a
+ready-to-use checkpoint (a published HF repo id, once one exists -- see
+Known gaps).
+
+### Developers (editable install)
 
 ```sh
 cd voice-announce-mcp
@@ -49,9 +75,11 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e .
 ```
 
-The `freyatts` dependency installs from `github.com/ummjevel/FreyaTTS` via
-git -- that repo needs to be public (or installed separately as an editable
-local checkout) for this to resolve.
+Verified (2026-07-24) in a clean venv against a local FreyaTTS checkout:
+`pip install -e .` resolves `freyatts` and all other dependencies with no
+manual `PYTHONPATH` needed, **once both this repo and FreyaTTS's
+`pyproject.toml` commit are pushed** -- pip fetches `freyatts` straight from
+`github.com/ummjevel/FreyaTTS` via git.
 
 ## Register with Claude Code
 
@@ -89,11 +117,14 @@ env = { VOICE_MCP_MODEL = "/path/to/checkpoints/distill_voiceA/final" }
 
 ## Known gaps / next steps
 
-- No installed/verified run yet -- next step is a smoke test end-to-end on
-  at least one real machine per platform.
-- `VOICE_MCP_MODEL` default points at an unpublished HF repo; needs the
-  actual FreyaTTS Korean checkpoint pushed (see `FreyaTTS` repo, blocked on
-  git push auth as of 2026-07-24) before the default is usable out of the box.
+- Core pipeline verified on Linux/CPU only so far -- next step is a smoke
+  test on real macOS and Windows hardware (playback code especially).
+- `VOICE_MCP_MODEL` default points at an unpublished HF repo. Publish it
+  **already converted** to `config.json` + `model.safetensors` format
+  (i.e. push the `hf/` output of `convert_ckpt.py`, not the raw training
+  `model.pt`) so end users never need to run the converter themselves.
 - No quality/latency tuning done here yet -- `FreyaTTS/README.md`'s
   Evaluation section has the levers (ODE step count, model size) if
   `announce()` turns out too slow in practice.
+- Not yet on PyPI, so `pipx install` currently means `pipx install git+...`
+  (slower first install, rebuilds from source) rather than a prebuilt wheel.
