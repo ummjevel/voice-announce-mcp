@@ -14,10 +14,12 @@ dependencies = [
     "huggingface_hub",
     "safetensors",
     "einops",
-    "voxcpm",
+    "pydantic",
     "uroman",
     # freyatts isn't on PyPI -- pip fetches it straight from the (now
     # pip-installable) FreyaTTS repo. No manual clone/PYTHONPATH needed.
+    # (No `voxcpm` here either -- freyatts vendors the one module it needs
+    # from it, see FreyaTTS/freyatts/_vendor/audiovae/.)
     "freyatts @ git+https://github.com/ummjevel/FreyaTTS.git",
 ]
 
