@@ -14,14 +14,16 @@ dependencies = [
     "einops",
     "voxcpm",
     "uroman",
-    # freyatts isn't on PyPI. Once https://github.com/ummjevel/FreyaTTS is
-    # public this resolves directly; until then, install it separately
-    # (editable, from a local clone) and remove/skip this line.
+    # freyatts isn't on PyPI -- pip fetches it straight from the (now
+    # pip-installable) FreyaTTS repo. No manual clone/PYTHONPATH needed.
     "freyatts @ git+https://github.com/ummjevel/FreyaTTS.git",
 ]
 
 [project.scripts]
 voice-announce-mcp = "voice_announce_mcp.server:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [build-system]
 requires = ["hatchling"]
