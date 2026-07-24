@@ -46,25 +46,38 @@ drivers).
 
 ### Non-developers (recommended): one command, no manual venv
 
-[`pipx`](https://pipx.pypa.io/) installs a Python CLI tool into its own
-isolated environment automatically -- no `venv`/`activate`/`PYTHONPATH`
-steps for the user to get right.
+Use [`uv`](https://docs.astral.sh/uv/) rather than `pipx`. Both install a
+Python CLI into its own isolated environment, but `uv` can also **fetch and
+use a specific Python version itself** -- the user's `python3` doesn't need
+to already be a supported version. This matters here: a brand-new Python
+(e.g. 3.14) routinely breaks `pip`/build tooling for packages like this one
+that pull in compiled dependencies (torch, etc.), with confusing internal
+errors instead of a clean version-mismatch message -- pinning the
+interpreter `uv` uses sidesteps that entirely, regardless of what's already
+on the user's machine.
 
 ```sh
-# one-time, if pipx isn't already installed:
-#   macOS:   brew install pipx
-#   Windows: py -m pip install --user pipx
-#   Linux:   sudo apt install pipx   (or: python3 -m pip install --user pipx)
+# one-time, if uv isn't already installed:
+#   macOS/Linux: curl -LsSf https://astral.sh/uv/install.sh | sh
+#   Windows:     powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-pipx install git+https://github.com/ummjevel/voice-announce-mcp.git
+uv tool install --python 3.12 "voice-announce-mcp @ git+https://github.com/ummjevel/voice-announce-mcp.git"
 ```
 
-This pulls in `freyatts` (and its own dependencies: torch, voxcpm, etc.)
+`--python 3.12` tells `uv` to download and use that interpreter for this
+tool specifically (it does not touch or require any system Python). This
+pulls in `freyatts` (and its own dependencies: torch, voxcpm, etc.)
 automatically -- `freyatts` is now a proper pip package (see
-`FreyaTTS/pyproject.toml`), so this is a single command with nothing to
-clone or convert by hand, as long as `VOICE_MCP_MODEL` points at a
-ready-to-use checkpoint (a published HF repo id, once one exists -- see
-Known gaps).
+`FreyaTTS/pyproject.toml`) -- so it's a single command with nothing to clone
+or convert by hand, as long as `VOICE_MCP_MODEL` points at a ready-to-use
+checkpoint (a published HF repo id, once one exists -- see Known gaps).
+
+**Note:** the exact `uv tool install` flags above are our best understanding
+of `uv`'s CLI, not yet run against a real `uv` install end to end -- if the
+syntax has drifted, `uv tool install --help` has the current form. `pipx`
+works too (`pipx install git+https://...`), just without the
+Python-version-pinning safety net -- only use it if the system's default
+`python3` is already in the `>=3.10,<3.14` range this project supports.
 
 ### Developers (editable install)
 

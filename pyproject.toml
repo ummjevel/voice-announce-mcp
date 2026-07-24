@@ -2,7 +2,10 @@
 name = "voice-announce-mcp"
 version = "0.1.0"
 description = "MCP server that speaks short task summaries out loud (FreyaTTS-based) for Claude Code / Codex, on Mac, Windows, and WSL2."
-requires-python = ">=3.10"
+# Upper bound matches FreyaTTS's -- see that repo's pyproject.toml for why:
+# a too-new Python otherwise fails deep inside pip/uv's internals instead of
+# with a clear "unsupported" message.
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "mcp>=1.0.0",
     "torch",
