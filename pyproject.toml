@@ -1,0 +1,28 @@
+[project]
+name = "voice-announce-mcp"
+version = "0.1.0"
+description = "MCP server that speaks short task summaries out loud (FreyaTTS-based) for Claude Code / Codex, on Mac, Windows, and WSL2."
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "torch",
+    "numpy",
+    "soundfile",
+    "librosa",
+    "huggingface_hub",
+    "safetensors",
+    "einops",
+    "voxcpm",
+    "uroman",
+    # freyatts isn't on PyPI. Once https://github.com/ummjevel/FreyaTTS is
+    # public this resolves directly; until then, install it separately
+    # (editable, from a local clone) and remove/skip this line.
+    "freyatts @ git+https://github.com/ummjevel/FreyaTTS.git",
+]
+
+[project.scripts]
+voice-announce-mcp = "voice_announce_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
